@@ -11,13 +11,14 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
     private final int WIDTH = 30, HEIGHT = 20;
     private int speed = 100;
     private int score = 0;
+    private int highScore = 0; // 최고 기록 추가
     private boolean running = false;
-    
+
     private ArrayList<Point> snake;
     private Point food;
     private char direction = 'R';
     private Timer timer;
-    
+
     public SnakeGame() {
         this.setPreferredSize(new Dimension(WIDTH * TILE_SIZE, HEIGHT * TILE_SIZE));
         this.setBackground(Color.BLACK);
@@ -25,7 +26,7 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
         this.addKeyListener(this);
         startGame();
     }
-    
+
     public void startGame() {
         snake = new ArrayList<>();
         snake.add(new Point(5, 5));
@@ -40,27 +41,27 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
         timer = new Timer(speed, this);
         timer.start();
     }
-    
+
     public void generateFood() {
         Random rand = new Random();
         do {
             food = new Point(rand.nextInt(WIDTH), rand.nextInt(HEIGHT));
         } while (snake.contains(food)); // 뱀의 몸 위에 음식이 생성되지 않도록 처리
     }
-    
+
     public void move() {
         if (!running) return;
-        
+
         Point head = snake.get(0);
         Point newHead = new Point(head);
-        
+
         switch (direction) {
             case 'U': newHead.y--; break;
             case 'D': newHead.y++; break;
             case 'L': newHead.x--; break;
             case 'R': newHead.x++; break;
         }
-        
+
         if (newHead.equals(food)) {
             snake.add(0, food);
             generateFood();
@@ -73,58 +74,67 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
             snake.add(0, newHead);
             snake.remove(snake.size() - 1);
         }
-        
+
         checkCollision();
     }
-    
+
     public void checkCollision() {
         Point head = snake.get(0);
-        
+
         if (head.x < 0 || head.x >= WIDTH || head.y < 0 || head.y >= HEIGHT) {
             running = false;
             timer.stop();
+            updateHighScore(); // 최고 기록 갱신
         }
-        
+
         for (int i = 1; i < snake.size(); i++) {
             if (head.equals(snake.get(i))) {
                 running = false;
                 timer.stop();
+                updateHighScore(); // 최고 기록 갱신
             }
         }
     }
-    
+
+    private void updateHighScore() {
+        if (score > highScore) {
+            highScore = score;
+        }
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        
+
+        // 음식 그리기
         g.setColor(Color.RED);
         g.fillRect(food.x * TILE_SIZE, food.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        
+
+        // 뱀 그리기
         g.setColor(Color.PINK);
         for (Point p : snake) {
             g.fillRect(p.x * TILE_SIZE, p.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         }
-        
+
+        // 점수와 최고 기록 그리기
         g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 40));
-        String scoreText = "Score: " + score;
-        FontMetrics metrics = g.getFontMetrics();
-        int x = (WIDTH * TILE_SIZE - metrics.stringWidth(scoreText)) / 2;
-        int y = 40;
-        g.drawString(scoreText, x, y);
-        
+        g.setFont(new Font("Arial", Font.BOLD, 20));
+        g.drawString("Score: " + score, 10, 30);
+        g.drawString("High Score: " + highScore, 10, 50);
+
+        // 게임 오버 메시지
         if (!running) {
             g.setFont(new Font("Arial", Font.BOLD, 30));
             g.drawString("Game Over! Press R to Restart", WIDTH * TILE_SIZE / 6, HEIGHT * TILE_SIZE / 2);
         }
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         move();
         repaint();
     }
-    
+
     @Override
     public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
@@ -135,14 +145,14 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
             case KeyEvent.VK_R: if (!running) startGame(); break;
         }
     }
-    
+
     @Override public void keyReleased(KeyEvent e) {}
     @Override public void keyTyped(KeyEvent e) {}
-    
+
     public static void main(String[] args) {
         JFrame frame = new JFrame("Snake Game");
         SnakeGame game = new SnakeGame();
-        
+
         frame.add(game);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
